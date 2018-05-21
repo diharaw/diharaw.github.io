@@ -1,65 +1,26 @@
-# Site wide configuration
+# Dependencies
+markdown:         redcarpet
+highlighter:      pygments
 
-title: "Skinny Bones"
-description: "A lightweight site starter for Jekyll"
-logo: 120x120.gif
-teaser: 400x250.gif
-locale: en_US
-url: "https://mmistakes.github.io/skinny-bones-jekyll"
-feed:
-  path: atom.xml
+# Permalinks
+permalink:        pretty
+relative_permalinks: true
 
-# Jekyll configuration
+# Setup
+title:            Hyde
+tagline:          'A Jekyll theme'
+description:      'A brazen two-column <a href="http://jekyllrb.com" target="_blank">Jekyll</a> theme that pairs a prominent sidebar with uncomplicated content. Made by <a href="https://twitter.com/mdo" target="_blank">@mdo</a>.'
+url:              http://hyde.getpoole.com
+baseurl:          /
 
-sass:
-  sass_dir: _sass
-  style: compressed
-permalink: /:categories/:title/
-kramdown:
-  toc_levels: 1..2
-highlighter: rouge
-gems:
-  - jekyll-sitemap
-  - jekyll-gist
-  - jekyll-feed
+author:
+  name:           'Mark Otto'
+  url:            https://twitter.com/mdo
 
+paginate:         5
 
-# Site owner
-owner:
-  name: "Michael Rose"
-  web: "https://mademistakes.com"
-  twitter: "mmistakes"
-  bio: "Just another boring, tattooed, time traveling designer."
-  avatar: "bio-photo.jpg" # 160x160 px image for author byline
-  google:
-    plus: "+MichaelRoseDesign"
-    ad-client: "ca-pub-7328585512091257"
-    ad-slot: 3049671934
-  disqus-shortname:
+# Custom vars
+version:          2.1.0
 
-
-include:
-  - .htaccess
-exclude:
-  - "*.less"
-  - "*.sublime-project"
-  - "*.sublime-workspace"
-  - .asset-cache
-  - .bundle
-  - .jekyll-assets-cache
-  - .sass-cache
-  - CHANGELOG
-  - Capfile
-  - Gemfile
-  - Gruntfile.js
-  - LICENSE
-  - README
-  - Rakefile
-  - config
-  - gulpfile.js
-  - lib
-  - log
-  - node_modules
-  - package.json
-  - spec
-  - tmp
+github:
+  repo:           https://github.com/poole/hyde
