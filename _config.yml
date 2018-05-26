@@ -1,59 +1,63 @@
-# Dependencies
-markdown:         kramdown
-highlighter:      rouge
+# Site
+title:              'Dihara Wijetunga'
+bio:                'Graphics Programming, Game Development and other shady business…'
+description:        "Graphics Programming, Game Development and other shady business…"
+locale:             en_US
+baseurl: "" # the subpath of your site, e.g. /blog
+url: "" # the base hostname & protocol for your site
 
-# Setup
-title:            Hydeout
-tagline:          'A Jekyll theme'
-description:      'The <a href="http://hyde.getpoole.com" target="_blank">Hyde</a> theme for <a href="http://jekyllrb.com" target="_blank">Jekyll</a>, refreshed.'
-url:              https://diharaw.github.io
-baseurl:          # the optional subpath of your site, e.g. "/blog"
-                  # NB: This applies to all pages in your Jekyll site.
-                  # If you want to move just the blog index pages but keep
-                  # other pages at root, see the paginate_path and
-                  # sidebar_blog_link below.
+defaults:
+- scope:
+    path: ''
+    type: posts
+  values:
+    permalink: "/blog/:title/"
+    layout: post
+    author:
 
-author:
-  name:           'Andrew Fong'
-  url:            https://twitter.com/fongandrewc
+# Jekyll
+permalink:          /blog/:title/
+markdown:           kramdown
+highlighter:        rouge
+kramdown:
+  auto_ids:         true
+  footnote_nr:      1
+  entity_output:    as_char
+  toc_levels:       1..6
+  enable_coderay:   false
+mathjax:            true
+sass:
+  sass_dir:         _sass
+  style:            compressed
 
-paginate:         5
-# paginate_path:    '/page:num'
-                    # Or '/blog/page:num' if you want to move your index pages
+# Comments
+disqus_shortname:   default
 
-plugins:
+# Social
+analytics-id:       "default"
+twitter:            default
+facebook:           default
+instagram:          default
+github:             default
+
+# personal
+location:           Los Angeles, CA
+phone:              310-318-5555
+email:              info@default.com
+
+# Gems
+gems:
+  - jekyll-mentions
+  - jekyll-sitemap
   - jekyll-feed
   - jekyll-gist
   - jekyll-paginate
 
-exclude:
-  - Gemfile
-  - Gemfile.lock
-  - Makefile
-  - README.md
-  - .gitignore
+paginate: 6
+paginate_path: "/blog/page:num/"
 
-permalink:        /:year/:month/:day/:title.html
+jekyll-mentions:
+    base_url: https://github.com
 
-defaults:
-  - scope:
-      path: "_posts"
-      type: "posts"
-    values:
-      excerpt_separator:  <!--more-->
-      layout: post
-
-# Custom vars
-version:            3.6.0
-sidebar_home_link:  true
-# sidebar_blog_link:  '/blog'   # By default, your home page is your blog
-                                # page. If you change your paginate_path,
-                                # set this to the root of the paginate_path
-                                # to enable a separate blog link.
-github:
-  repo:           https://github.com/fongandrew/hydeout
-
-disqus:
-  shortname:      hydeout
-
-google_analytics: UA-100461102-1
+# Exclude list
+exclude: [README.md, Gemfile, Gemfile.lock, node_modules, gulpfile.js, package.json, _site, src, vendor, CNAME, LICENSE, Rakefile, old]
