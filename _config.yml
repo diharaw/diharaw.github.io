@@ -1,7 +1,7 @@
 title: Dihara Wijetunga
 description: Graphics Programming, Game Developement and other shady business.
 
-url: http://brianmaierjr.github.com/long-haul
+url: http://diharaw.github.io
 baseurl: ""
 paginate_path: "blog/page:num/"
 permalink: blog/:title/
@@ -20,8 +20,6 @@ navigation:
    url: /about
  - title: Resume
    url: /resume
- - title: Contact
-   url: /contact
 
 social:
    github: diharaw

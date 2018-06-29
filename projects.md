@@ -7,6 +7,14 @@ title: Projects
 	<h1 class="pageTitle">Projects</h1>
 </div>
 
+<h3><a href="https://github.com/diharaw/Nimble">Nimble</a></h3>
+
+A personal, lightweight OpenGL rendering engine for quickly prototyping graphics techniques. Features Forward and Deferred rendering paths, Physically Based Rendering, Cascaded Shadow Maps, Screen Space Ambient Occlusion (SSAO), Per-Object Motion Blur, Parallax Occlusion Mapping, Normal Mapping and a host of other techniques.
+
+![Nimble]({{ site.baseurl }}/assets/img/nimble.jpg)
+
+---
+
 <h3><a href="https://github.com/diharaw/Terminus-Engine">Terminus Engine</a></h3>
 
 <!-- ![Me]({{ site.baseurl }}/assets/img/editor.jpg){:style="float: right; height: 250px; margin-top: 20px; padding-right: 0px; padding-left: 20px"} -->
@@ -25,6 +33,14 @@ A C++ software rasterizer created for the purpose of learning how the graphics p
 ![Rasterator]({{ site.baseurl }}/assets/img/rasterator.jpg)
 
 ---
+<h3><a href="https://www.youtube.com/watch?v=u2XZ65rx37w">Terminus-2015</a></h3>
+
+My very first rendering engine project, created way back in 2015 when i started learning OpenGL. Features a multitude of graphics technique implementations. A demo reel of the project can be viewed [here](https://www.youtube.com/watch?v=u2XZ65rx37w).
+
+![Terminus-2016]({{ site.baseurl }}/assets/img/terminus2015_1.jpg)
+![Terminus-2016]({{ site.baseurl }}/assets/img/terminus2015_2.jpg)
+
+---
 <h3><a href="https://github.com/diharaw/dwThreadPool">dwThreadPool</a></h3>
 
 C++ 11 thread pool library with task-based multithreading. Allows you to create task continuations, groupings and dependencies and also to wait on certain tasks. Fully cross-platform and completely dependency-free: can be dropped into any existing C++ codebase. 
@@ -38,6 +54,19 @@ A Caffe-powered Facial and Speech emotion recognition library written in C++. Th
 
 ![dwThreadPool]({{ site.baseurl }}/assets/img/emolib.jpg)
 
+---
+<h3><a href="https://github.com/diharaw/dwSampleFramework">dwSampleFramework</a></h3>
+
+A C++ OpenGL framework for quickly building graphics sample applications. Offers Window creation, input and a set of simple OpenGL wrapper classes for common objects such as Textures, Shaders and Buffers.
+
+![dwSampleFramework]({{ site.baseurl }}/assets/img/dwSampleFramework.jpg)
+
+---
+<h3><a href="https://github.com/diharaw/CascadedShadowMaps">Cascaded Shadow Maps</a></h3>
+
+A Simple Cascaded Shadow Maps sample built using the dwSampleFramework. Features the Parallel Split Shadow Maps approach to cascade splitting, PCF filtering, Stable cascades using bounding spheres and various debug views.
+
+![CSM]({{ site.baseurl }}/assets/img/csm.jpg)
 ---
 <h3><a href="https://github.com/diharaw/Terminus-GFX">Terminus-GFX</a></h3>
 
