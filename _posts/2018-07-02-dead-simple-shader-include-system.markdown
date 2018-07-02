@@ -2,6 +2,7 @@
 layout: post
 title:  "Dead Simple Shader Include System"
 date:   2018-07-02
+description: A quick tutorial on how to write a super simple shader include system for OpenGL projects that will save you countless hours of rewriting and copy/pasting.
 ---
 
 In a graphics project of considerable size, your shader codebase will start getting pretty big and a lot of common elements such as structure declarations, helper functions and constants will eventually be duplicated because of this. How we would ideally want to write our shaders is like this:
