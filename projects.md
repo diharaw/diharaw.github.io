@@ -11,7 +11,13 @@ title: Projects
 
 A personal, lightweight OpenGL rendering engine for quickly prototyping graphics techniques. Features Forward and Deferred rendering paths, Physically Based Rendering, Cascaded Shadow Maps, Screen Space Ambient Occlusion (SSAO), Per-Object Motion Blur, Parallax Occlusion Mapping, Normal Mapping and a host of other techniques.
 
-![Nimble]({{ site.baseurl }}/assets/img/nimble.jpg)
+![Nimble]({{ site.baseurl }}/assets/img/nimble_main1.jpg)
+
+![Nimble]({{ site.baseurl }}/assets/img/nimble_main2.jpg)
+
+![Nimble]({{ site.baseurl }}/assets/img/nimble_ssr.jpg)
+
+![Nimble]({{ site.baseurl }}/assets/img/nimble_mb.jpg)
 
 ---
 
