@@ -9,7 +9,7 @@ title: Projects
 
 <h3><a href="https://github.com/diharaw/Nimble">Nimble</a></h3>
 
-A personal, lightweight OpenGL rendering engine for quickly prototyping graphics techniques. Features Forward and Deferred rendering paths, Physically Based Rendering, Cascaded Shadow Maps, Screen Space Ambient Occlusion (SSAO), Per-Object Motion Blur, Parallax Occlusion Mapping, Normal Mapping and a host of other techniques.
+A personal, lightweight OpenGL rendering engine for quickly prototyping graphics techniques. Features Forward and Deferred rendering paths, Physically Based Rendering, Cascaded Shadow Maps, Screen Space Ambient Occlusion (SSAO), Screen Space Reflections, Bloom, Per-Object Motion Blur, Parallax Occlusion Mapping, Normal Mapping and a host of other techniques.
 
 ![Nimble]({{ site.baseurl }}/assets/img/nimble_main1.jpg)
 ![Nimble]({{ site.baseurl }}/assets/img/nimble_main2.jpg)
