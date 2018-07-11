@@ -36,6 +36,15 @@ A C++ software rasterizer created for the purpose of learning how the graphics p
 ![Rasterator]({{ site.baseurl }}/assets/img/rasterator.jpg)
 
 ---
+<h3><a href="https://github.com/diharaw/GPUPathTracer">GPU Path Tracer</a></h3>
+
+<!-- ![Me]({{ site.baseurl }}/assets/img/rasterator.jpg){:style="float: right; height: 250px; margin-top: 20px; padding-right: 0px; padding-left: 20px"} -->
+
+A real-time, OpenGL compute shader based progressive path tracer. Based loosely on Peter Shirley's book "Raytracing in one weekend". Currently supports primitive shapes with triangle mesh support coming in the future. 
+
+![GPUPathTracer]({{ site.baseurl }}/assets/img/path_tracer.jpg)
+
+---
 <h3><a href="https://www.youtube.com/watch?v=u2XZ65rx37w">Terminus-2015</a></h3>
 
 My very first rendering engine project, created way back in 2015 when i started learning OpenGL. Features a multitude of graphics technique implementations. A demo reel of the project can be viewed [here](https://www.youtube.com/watch?v=u2XZ65rx37w).
