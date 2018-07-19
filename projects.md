@@ -40,7 +40,7 @@ A C++ software rasterizer created for the purpose of learning how the graphics p
 
 <!-- ![Me]({{ site.baseurl }}/assets/img/rasterator.jpg){:style="float: right; height: 250px; margin-top: 20px; padding-right: 0px; padding-left: 20px"} -->
 
-A real-time, OpenGL compute shader based progressive path tracer. Based loosely on Peter Shirley's book "Raytracing in one weekend". Currently supports primitive shapes with triangle mesh support coming in the future. 
+A real-time, OpenGL compute shader based progressive path tracer. Based loosely on Peter Shirley's book "Raytracing in one weekend". Currently supports primitive shapes with triangle mesh support coming in the future. For a demo video of this in action, click [here](https://www.youtube.com/watch?v=1UFBZ17Nwj8).
 
 ![GPUPathTracer]({{ site.baseurl }}/assets/img/path_tracer.jpg)
 
