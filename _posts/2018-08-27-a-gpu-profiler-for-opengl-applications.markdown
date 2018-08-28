@@ -5,6 +5,8 @@ date:   2018-08-27
 description: A tiny profiler class to use in OpenGL application to help you time your GPU operations.
 ---
 
+![Nimble-Profiler]({{ site.baseurl }}/assets/img/profiler.jpg)
+
 An important part of any Graphics Programming job is optimization. And to do that, you'd need know just how fast your shiny new shadow mapping algorithm, post-process shader etc is running. And the recommended measure of performance is ideally in Miliseconds rather than Frames Per Second (Read [this article](https://www.mvps.org/directx/articles/fps_versus_frame_time.htm) for a great explanation on why). 
 
 Simply timing your OpenGL calls on the CPU side is the completely wrong way to go about this as the CPU and GPU operate on completely different timelines (the GPU is *slightly* behind the CPU). And depending on the load, one could take longer than the other. So in order to measure how long OpenGL commands take to complete on the GPU, we have to utilize Queries. 
