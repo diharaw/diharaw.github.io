@@ -45,6 +45,24 @@ A real-time, OpenGL compute shader based progressive path tracer. Based loosely 
 ![GPUPathTracer]({{ site.baseurl }}/assets/img/path_tracer.jpg)
 
 ---
+<h3><a href="https://github.com/diharaw/AtmosphericScattering">Atmospheric Scattering</a></h3>
+
+
+A compute shader based implementation of Eric Brunetons' recently updated Atmospheric Scattering implementation with a practical rasterization-based demo instead of the ray-tracing demo provided with Erics' own repository.
+
+![AtmosphericScattering]({{ site.baseurl }}/assets/img/atmosphere_1.jpg)
+![AtmosphericScattering]({{ site.baseurl }}/assets/img/atmosphere_2.jpg)
+
+---
+<h3><a href="https://github.com/diharaw/AnimationStateMachine">Animation Systems</a></h3>
+
+<!-- ![Me]({{ site.baseurl }}/assets/img/anim.jpg){:style="float: right; height: 250px; margin-top: 20px; padding-right: 0px; padding-left: 20px"} -->
+
+An experiment on creating an animation system similar to Unreal Engine 4 from scratch with Assimp, OpenGL and the dwSampleFramework.
+
+![AnimationStateMachine]({{ site.baseurl }}/assets/img/anim.jpg)
+
+---
 <h3><a href="https://www.youtube.com/watch?v=u2XZ65rx37w">Terminus-2015</a></h3>
 
 My very first rendering engine project, created way back in 2015 when i started learning OpenGL. Features a multitude of graphics technique implementations. A demo reel of the project can be viewed [here](https://www.youtube.com/watch?v=u2XZ65rx37w).
