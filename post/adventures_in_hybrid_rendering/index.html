@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="author" content="Dihara Wijetunga ">
+<meta name="description" content="As an accompanying piece to my recently released Hybrid Rendering sample, this blog post dives into some of the techniques and optimizations used and will help anyone interested to understand the project.
+Before going any further let&amp;rsquo;s answer the question &amp;ldquo;Why hybrid rendering?&amp;rdquo;. In a typical rasterization based rendering pipeline, certain effects such as Global Illumination, Reflections and Soft Shadows have to be approximated using either screen space techniques, offline baking or other approaches which typically lead to less-than-believable results in many cases." />
+<meta name="keywords" content=", Ray Tracing, Vulkan" />
+<meta name="robots" content="noodp" />
+<meta name="theme-color" content="" />
+<link rel="canonical" href="https://diharaw.github.io/post/adventures_in_hybrid_rendering/" />
+
+
+    <title>
+        
+            Adventures in Hybrid Rendering :: Dihara Wijetunga  — Graphics Programmer
+        
+    </title>
+
+
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css" rel="stylesheet"
+    type="text/css">
+
+
+
+<link rel="stylesheet" href="https://diharaw.github.io/main.29c2c8c3fc9cf748254138351f142ac2833b208a68e83aec126edc98b59efef2.css">
+
+
+    
+        <link rel="stylesheet" type="text/css" href="https://diharaw.github.io/css/styles.css">
+    
+
+
+
+    <link rel="apple-touch-icon" sizes="180x180" href="https://diharaw.github.io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://diharaw.github.io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://diharaw.github.io/favicon-16x16.png">
+    <link rel="manifest" href="https://diharaw.github.io/site.webmanifest">
+    <link rel="mask-icon" href="https://diharaw.github.io/safari-pinned-tab.svg" color="#1b1c1d">
+    <link rel="shortcut icon" href="https://diharaw.github.io/favicon.ico">
+    <meta name="msapplication-TileColor" content="#1b1c1d">
+    <meta name="theme-color" content="#1b1c1d">
+
+
+
+<meta itemprop="name" content="Adventures in Hybrid Rendering">
+<meta itemprop="description" content="As an accompanying piece to my recently released Hybrid Rendering sample, this blog post dives into some of the techniques and optimizations used and will help anyone interested to understand the project.
+Before going any further let&rsquo;s answer the question &ldquo;Why hybrid rendering?&rdquo;. In a typical rasterization based rendering pipeline, certain effects such as Global Illumination, Reflections and Soft Shadows have to be approximated using either screen space techniques, offline baking or other approaches which typically lead to less-than-believable results in many cases."><meta itemprop="datePublished" content="2021-09-27T19:20:56+01:00" />
+<meta itemprop="dateModified" content="2021-09-27T19:20:56+01:00" />
+<meta itemprop="wordCount" content="5581"><meta itemprop="image" content="https://diharaw.github.io"/>
+<meta itemprop="keywords" content="Ray Tracing,Vulkan," />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://diharaw.github.io"/>
+
+<meta name="twitter:title" content="Adventures in Hybrid Rendering"/>
+<meta name="twitter:description" content="As an accompanying piece to my recently released Hybrid Rendering sample, this blog post dives into some of the techniques and optimizations used and will help anyone interested to understand the project.
+Before going any further let&rsquo;s answer the question &ldquo;Why hybrid rendering?&rdquo;. In a typical rasterization based rendering pipeline, certain effects such as Global Illumination, Reflections and Soft Shadows have to be approximated using either screen space techniques, offline baking or other approaches which typically lead to less-than-believable results in many cases."/>
+
+
+
+
+    <meta property="og:title" content="Adventures in Hybrid Rendering" />
+<meta property="og:description" content="As an accompanying piece to my recently released Hybrid Rendering sample, this blog post dives into some of the techniques and optimizations used and will help anyone interested to understand the project.
+Before going any further let&rsquo;s answer the question &ldquo;Why hybrid rendering?&rdquo;. In a typical rasterization based rendering pipeline, certain effects such as Global Illumination, Reflections and Soft Shadows have to be approximated using either screen space techniques, offline baking or other approaches which typically lead to less-than-believable results in many cases." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://diharaw.github.io/post/adventures_in_hybrid_rendering/" /><meta property="og:image" content="https://diharaw.github.io"/><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2021-09-27T19:20:56+01:00" />
+<meta property="article:modified_time" content="2021-09-27T19:20:56+01:00" />
+
+
+
+
+
+
+
+    <meta property="article:published_time" content="2021-09-27 19:20:56 &#43;0100 BST" />
+
+
+
+
+
+
+
+
+
+
+    </head>
+
+    
+        <body>
+    
+    
+        <div class="container">
+            <header class="header">
+    <span class="header__inner">
+        <a href="https://diharaw.github.io/" style="text-decoration: none;">
+    <div class="logo">
+        
+            <span class="logo__mark">></span>
+            <span class="logo__text">Dihara Wijetunga</span>
+            <span class="logo__cursor" style=
+                  "
+                   
+                   ">
+            </span>
+        
+    </div>
+</a>
+
+
+        <span class="header__right">
+            
+                <nav class="menu">
+    <ul class="menu__inner"><li><a href="https://diharaw.github.io/about/">About</a></li><li><a href="https://diharaw.github.io/portfolio/">Portfolio</a></li><li><a href="https://diharaw.github.io/post/">Posts</a></li><li><a href="https://diharaw.github.io/resume/">Resume</a></li>
+    </ul>
+</nav>
+
+                <span class="menu-trigger">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+                    </svg>
+                </span>
+            
+        </span>
+    </span>
+</header>
+
+
+            <div class="content">
+                
+    <main class="post">
+
+        <div class="post-info">
+            
+            </p>
+        </div>
+
+        <article>
+            <h2 class="post-title"><a href="https://diharaw.github.io/post/adventures_in_hybrid_rendering/">Adventures in Hybrid Rendering</a></h2>
+
+            
+            
+            
+
+            <div class="post-content">
+                <figure><a href="https://diharaw.github.io/images/adventures_in_hybrid_rendering/32.jpg" target="_blank"><img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/32.jpg"/></a>
+</figure>
+
+<p>As an accompanying piece to my recently released <a href="https://github.com/diharaw/HybridRendering">Hybrid Rendering</a> sample, this blog post dives into some of the techniques and optimizations used and will help anyone interested to understand the project.</p>
+<p>Before going any further let&rsquo;s answer the question &ldquo;Why hybrid rendering?&rdquo;. In a typical rasterization based rendering pipeline, certain effects such as Global Illumination, Reflections and Soft Shadows have to be approximated using either screen space techniques, offline baking or other approaches which typically lead to less-than-believable results in many cases. A fully ray traced renderer on the other hand would be able to model these real-life phenomena much more realistically, although at a heavy performance hit.</p>
+
+  
+  <link href="https://diharaw.github.io/css/twentytwenty-no-compass.css" rel="stylesheet" type="text/css" />
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+  <script src="https://diharaw.github.io/js/jquery.event.move.js"></script>
+  <script src="https://diharaw.github.io/js/jquery.twentytwenty.js"></script>
+  <script>
+    $(window).load(function(){
+      $("#raster_hybrid_img").twentytwenty({
+        default_offset_pct:  0.5 ,
+        no_overlay:  false ,
+        before_label: "Rasterization",
+        after_label: "Hybrid Ray Tracing"
+      });
+    });
+    </script>
+
+<div id="raster_hybrid_img">
+ <img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/3.jpg" />
+ <img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/2.jpg" />
+</div>
+<p>Hybrid Rendering is simply the best of both worlds; meaning that we&rsquo;re enhancing a Rasterization based pipeline by bolting on a bunch of Ray Traced effects that would otherwise have to be done using approximations or hacks.</p>
+<h2 id="denoising">Denoising</h2>
+
+  
+  <link href="https://diharaw.github.io/css/twentytwenty-no-compass.css" rel="stylesheet" type="text/css" />
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+  <script src="https://diharaw.github.io/js/jquery.event.move.js"></script>
+  <script src="https://diharaw.github.io/js/jquery.twentytwenty.js"></script>
+  <script>
+    $(window).load(function(){
+      $("#noisy_denoised_img").twentytwenty({
+        default_offset_pct:  0.5 ,
+        no_overlay:  false ,
+        before_label: "Noisy",
+        after_label: "Denoised"
+      });
+    });
+    </script>
+
+<div id="noisy_denoised_img">
+ <img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/4.jpg" />
+ <img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/5.jpg" />
+</div>
+<p>Since real-time rendering applications have a tight frame time budget, adding ray tracing to the mix means that our ray budget for a single frame needs to be kept to a minimum in order to hit our frame rate target. Because of this, the rays-per-pixel number, or more commonly known as samples-per-pixel (spp), is usually 1 or 2 for most techniques.</p>
+<p>While such a low ray count is great performance-wise, visually it results in a noisy output especially for effects with some randomness such as Soft Shadows or Glossy Reflections. They simply cannot be rendered correctly with just a single ray per-frame. This is where denoising comes in, which attempts to take the noisy output of the ray tracing pass and clean it up using filters.</p>
+<p>The main denoising algorithm used in this sample is based on <a href="https://research.nvidia.com/publication/2017-07_Spatiotemporal-Variance-Guided-Filtering%3A">Spatiotemporal Variance-Guided Filtering (SVGF)</a> <strong>[1]</strong>. The algorithm is split into two main parts: Temporal and Spatial filtering.</p>
+<h3 id="temporal-filtering">Temporal Filtering</h3>
+<p>Even though we can only afford to shoot one ray per pixel in our use case, we can get around this limitation by accumulating samples <em>over time</em>, meaning that we can reuse older samples to create a cleaner, less noisy image. This is done by essentially finding where the current pixel was in the previous frame and then accumulating the current pixel into that history sample.</p>
+<p>The way we find where the pixel was in the previous frame is by using the current pixels motion vector which will allow us to find where this particular pixel was during the previous frame in screen space.</p>
+<p>The following simplified code block runs through the basic temporal accumulation logic.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">// Fetch the current sample.
+</span><span style="color:#75715e"></span>vec4 current_sample <span style="color:#f92672">=</span> texture(s_Current, tex_coord).rg;
+
+<span style="color:#75715e">// Get the motion vector for the current pixel.
+</span><span style="color:#75715e"></span>vec2 motion_vector <span style="color:#f92672">=</span> texture(s_MotionVector, tex_coord).rg;
+
+<span style="color:#75715e">// Compute the history coordinate.
+</span><span style="color:#75715e"></span>vec2 history_coord <span style="color:#f92672">=</span> tex_coord <span style="color:#f92672">+</span> motion_vector;
+
+<span style="color:#75715e">// Initialize the output to the current sample in case reprojection fails.
+</span><span style="color:#75715e"></span>vec4 output <span style="color:#f92672">=</span> current_sample;
+
+<span style="color:#75715e">// Initialize history length, which is the number of frames that the sample has been accumulated over.
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">float</span> history_length <span style="color:#f92672">=</span> <span style="color:#ae81ff">1.0f</span>;
+
+<span style="color:#75715e">// Check if the history sample is valid.
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">if</span> (is_reprojection_valid(history_coord))
+{
+    <span style="color:#75715e">// Fetch history sample
+</span><span style="color:#75715e"></span>    vec4 history_sample <span style="color:#f92672">=</span> texture(s_History, history_coord);
+
+    <span style="color:#75715e">// Fetch the length of the history sample and increment by 1 since the sample will be accumulated
+</span><span style="color:#75715e"></span>    history_length <span style="color:#f92672">=</span> texture(s_HistoryLength, history_coord).r <span style="color:#f92672">+</span> <span style="color:#ae81ff">1.0f</span>;
+
+    <span style="color:#75715e">// Compute the alpha value which will be used to determine how much of the history sample will be used
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">float</span> alpha <span style="color:#f92672">=</span> <span style="color:#ae81ff">1.0f</span> <span style="color:#f92672">/</span> history_length;
+
+    <span style="color:#75715e">// Accumulate the sample
+</span><span style="color:#75715e"></span>    output <span style="color:#f92672">=</span> mix(history_sample, current_sample, alpha);
+}
+
+imageStore(i_Output, coord, output);
+imageStore(i_OutputHistoryLength, coord, vec4(history_length, <span style="color:#ae81ff">0.0f</span>, <span style="color:#ae81ff">0.0f</span>, <span style="color:#ae81ff">0.0f</span>));
+</code></pre></div><p>The <em>is_reprojection_valid()</em> function basically checks if the history sample can actually be reprojected or not. One such reason for a failed reprojection is due the the history sample being off screen, which mainly happens when moving or rotating the camera.</p>
+<p>But another trickier reason for this is due to disocclusion, which is when the sample was occluded in the past but is now visible in the current frame, therefore no valid history exists.</p>
+<p>In order to check the validity of the history sample, it is necessary to have certain pixel properties from the previous frame available to us. To that end, my sample ping-pongs between two G-Buffers: one containing this frames' data, one containing the history data required for reprojection.</p>
+<p>Now let&rsquo;s take a look at the various disocclusion checks used in this sample.</p>
+<h4 id="plane-distance">Plane Distance</h4>
+<p>While it might make sense to use depth to determine if the surface belonging to the current pixel is too far away in the previous frame, this can result in false negatives if the camera is viewing a surface at a grazing angle.</p>
+<p>A better way to determine this was proposed by NVIDIA in their <a href="https://developer.nvidia.com/gtc/2020/video/s22699-vid">Recurrent Blur presentation</a> <strong>[2]</strong> where you check if the current and history sample both reside on the same plane.</p>
+<figure><a href="https://diharaw.github.io/images/adventures_in_hybrid_rendering/29.jpg" target="_blank"><img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/29.jpg"
+         alt="Diagram showing the difference between comparing depth values vs Plane Distance values from NVIDIA"/></a><figcaption>
+            <p>Diagram showing the difference between comparing depth values vs Plane Distance values from NVIDIA</p>
+        </figcaption>
+</figure>
+
+<p>This solves the false negative reprojections we get when using depth based comparisons. A dot product is used to determine the distance between the two planes and if it is within the threshold value it is considered to be valid.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">bool</span> <span style="color:#a6e22e">plane_distance_disocclusion_check</span>(vec3 current_pos, vec3 history_pos, vec3 current_normal)
+{
+    vec3  to_current    <span style="color:#f92672">=</span> current_pos <span style="color:#f92672">-</span> history_pos;
+    <span style="color:#66d9ef">float</span> dist_to_plane <span style="color:#f92672">=</span> abs(dot(to_current, current_normal));
+
+    <span style="color:#66d9ef">return</span> dist_to_plane <span style="color:#f92672">&gt;</span> PLANE_DISTANCE_THRESHOLD;
+}
+</code></pre></div><h4 id="normal">Normal</h4>
+<p>Another way to determine if the history sample is valid is to check if the angle between both world space normals is below a certain threshold. This would mean that the history sample belongs to the same surface as the current sample.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">bool</span> <span style="color:#a6e22e">normals_disocclusion_check</span>(vec3 current_normal, vec3 history_normal)
+{
+    <span style="color:#66d9ef">if</span> (pow(abs(dot(current_normal, history_normal)), <span style="color:#ae81ff">2</span>) <span style="color:#f92672">&gt;</span> NORMAL_DISTANCE_THRESHOLD)
+        <span style="color:#66d9ef">return</span> false;
+    <span style="color:#66d9ef">else</span>
+        <span style="color:#66d9ef">return</span> true;
+}
+</code></pre></div><h4 id="mesh-id">Mesh ID</h4>
+<p>While the two previous disocclusion checks are sufficient by themselves, there is also another check which compares the mesh ID of the current and history sample. This mesh ID is simply a unique integer assigned to each submesh in the scene and written into the G-Buffer. This check will guarantee that both samples originate from the same surface, especially in the case of moving objects. However, make sure to keep the mesh ID&rsquo;s consistent between frames as otherwise this comparison does not make sense.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">bool</span> <span style="color:#a6e22e">mesh_id_disocclusion_check</span>(<span style="color:#66d9ef">float</span> mesh_id, <span style="color:#66d9ef">float</span> mesh_id_prev)
+{
+    <span style="color:#66d9ef">if</span> (mesh_id <span style="color:#f92672">==</span> mesh_id_prev)
+        <span style="color:#66d9ef">return</span> false;
+    <span style="color:#66d9ef">else</span>
+        <span style="color:#66d9ef">return</span> true;
+}
+</code></pre></div><h4 id="pixel-variance">Pixel Variance</h4>
+<p>As the SVGF name suggests, variance plays a rather important role in this denoiser. And here we are talking about the variance of each pixel <em>over time</em>. During the temporal accumulation pass this variance is stored as the first and second moments of the current sample&rsquo;s luminance (or in the case of shadows or ambient occlusion, the value itself). These moments are also accumulated over time like the color itself, which allows the subsequent blur pass to dynamically adjust depending on how noisy the output is.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">// compute first two moments of luminance
+</span><span style="color:#75715e"></span>vec2 moments <span style="color:#f92672">=</span> vec2(<span style="color:#ae81ff">0.0f</span>);
+moments.r    <span style="color:#f92672">=</span> luminance(color);
+moments.g    <span style="color:#f92672">=</span> moments.r <span style="color:#f92672">*</span> moments.r;
+
+<span style="color:#75715e">// temporal integration of the moments
+</span><span style="color:#75715e"></span>moments <span style="color:#f92672">=</span> mix(history_moments, moments, alpha_moments);
+</code></pre></div><p>After the moments are accumulated, the actual variance value that will be read by the Spatial filter is computed and written out.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">float</span> variance <span style="color:#f92672">=</span> max(<span style="color:#ae81ff">0.0f</span>, moments.g <span style="color:#f92672">-</span> moments.r <span style="color:#f92672">*</span> moments.r);
+</code></pre></div><h3 id="spatial-filtering">Spatial Filtering</h3>
+<p>The spatial filtering portion of SVGF uses the À-Trous wavelet filter which is essentially a blur with multiple iterations where you accumulate pixels further from the center with each subsequent iteration.</p>
+<figure><a href="https://diharaw.github.io/images/adventures_in_hybrid_rendering/11.jpg" target="_blank"><img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/11.jpg"
+         alt="Illustration of the first three iterations of a 1D À-Trous Wavelet Transform, courtesy of NVIDIA"/></a><figcaption>
+            <p>Illustration of the first three iterations of a 1D À-Trous Wavelet Transform, courtesy of NVIDIA</p>
+        </figcaption>
+</figure>
+
+<p>If that doesn&rsquo;t help you visualize the filter behavior, here&rsquo;s the same thing in code-form.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> yy <span style="color:#f92672">=</span> <span style="color:#f92672">-</span>FILTER_RADIUS; yy <span style="color:#f92672">&lt;=</span> FILTER_RADIUS; yy<span style="color:#f92672">++</span>)
+{
+    <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> xx <span style="color:#f92672">=</span> <span style="color:#f92672">-</span>FILTER_RADIUS; xx <span style="color:#f92672">&lt;=</span> FILTER_RADIUS; xx<span style="color:#f92672">++</span>)
+    {
+        <span style="color:#66d9ef">const</span> ivec2 sample_coord <span style="color:#f92672">=</span> coord <span style="color:#f92672">+</span> ivec2(xx, yy) <span style="color:#f92672">*</span> STEP_SIZE; <span style="color:#75715e">// STEP SIZE = 1 &lt;&lt; filter_iteration
+</span><span style="color:#75715e"></span>
+        <span style="color:#75715e">// Apply filter...
+</span><span style="color:#75715e"></span>    }
+}
+</code></pre></div><p>In order to prevent over-blurring and to preserve edge details, each sample is weighted using the variance as well as some edge-stopping weights similar to the disocclusion checks in the temporal pass.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">float</span> <span style="color:#a6e22e">normal_edge_stopping_weight</span>(vec3 center_normal, vec3 sample_normal, <span style="color:#66d9ef">float</span> power)
+{
+    <span style="color:#66d9ef">return</span> pow(clamp(dot(center_normal, sample_normal), <span style="color:#ae81ff">0.0f</span>, <span style="color:#ae81ff">1.0f</span>), power);
+}
+
+<span style="color:#66d9ef">float</span> <span style="color:#a6e22e">depth_edge_stopping_weight</span>(<span style="color:#66d9ef">float</span> center_depth, <span style="color:#66d9ef">float</span> sample_depth, <span style="color:#66d9ef">float</span> phi)
+{
+    <span style="color:#66d9ef">return</span> exp(<span style="color:#f92672">-</span>abs(center_depth <span style="color:#f92672">-</span> sample_depth) <span style="color:#f92672">/</span> phi);
+}
+
+<span style="color:#66d9ef">float</span> <span style="color:#a6e22e">luma_edge_stopping_weight</span>(<span style="color:#66d9ef">float</span> center_luma, <span style="color:#66d9ef">float</span> sample_luma, <span style="color:#66d9ef">float</span> phi)
+{
+    <span style="color:#66d9ef">return</span> abs(center_luma <span style="color:#f92672">-</span> sample_luma) <span style="color:#f92672">/</span> phi;
+}
+</code></pre></div><p>The phi value for the <em>luma_edge_stopping_weight()</em> function is derived from the variance that we calculated at the end of the temporal pass.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">// u_PushConstants.phi_color is set to 10.0f by default
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">float</span> phi_color <span style="color:#f92672">=</span> u_PushConstants.phi_color <span style="color:#f92672">*</span> sqrt(max(<span style="color:#ae81ff">0.0</span>, EPSILON <span style="color:#f92672">+</span> variance));
+</code></pre></div><p>For this sample, around 3-4 À-Trous filter iterations seem to be sufficient for decent results with good performance.</p>
+<h3 id="tile-based-denoising">Tile-Based Denoising</h3>
+<p>While it is simpler to just use the denoiser across the entire frame, it does put a strain on performance as it requires a lot of texture fetches. To reduce the performance impact of this, we can choose to only denoise the pixels that actually need denoising. In this sample we make this decision at the tile level. This means that the screen is split up into tiles and for each tile we will consider all the ray traced input values and decide whether there is at least a single pixel within this tile that requires denoising. If so, we will write out the tile coordinates into a buffer and atomically incrementing the number of tiles that require denoising. After this we can perform a compute dispatch for only the tiles that require denoising by using an indirect dispatch combined with the buffer containing the tile coordinates.</p>
+<figure><a href="https://diharaw.github.io/images/adventures_in_hybrid_rendering/30.jpg" target="_blank"><img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/30.jpg"
+         alt="Simplified visualization of classifying penumbra tiles for denoising Ray Traced Soft Shadows."/></a><figcaption>
+            <p>Simplified visualization of classifying penumbra tiles for denoising Ray Traced Soft Shadows.</p>
+        </figcaption>
+</figure>
+
+<p>How a tile is considered for denoising depends entirely on the technique, so the following sections for each technique will cover their respective denoising details.</p>
+<h2 id="sampling">Sampling</h2>
+<p>The initial sampling strategy for the ray generation stages was white noise which, while producing adequate results, results in some slight animated noise after both Temporal and Spatial filtering. Significantly better results can be obtained by using the Blue Noise sampler introduced in the paper &ldquo;<a href="https://belcour.github.io/blog/slides/2019-sampling-bluenoise/index.html">A Low-Discrepancy Sampler that Distributes Monte Carlo Errors as a Blue Noise in Screen Space</a>&rdquo; <strong>[3]</strong>. The output using this Blue Noise sampler is more spatially coherent which makes the output a lot cleaner after some blurring compared to using White Noise.</p>
+
+  
+  <link href="https://diharaw.github.io/css/twentytwenty-no-compass.css" rel="stylesheet" type="text/css" />
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+  <script src="https://diharaw.github.io/js/jquery.event.move.js"></script>
+  <script src="https://diharaw.github.io/js/jquery.twentytwenty.js"></script>
+  <script>
+    $(window).load(function(){
+      $("#white_vs_blue_noise_img").twentytwenty({
+        default_offset_pct:  0.5 ,
+        no_overlay:  false ,
+        before_label: "White Noise",
+        after_label: "Blue Noise"
+      });
+    });
+    </script>
+
+<div id="white_vs_blue_noise_img">
+ <img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/14.jpg" />
+ <img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/15.jpg" />
+</div>
+<p>The sampler implementation can be found in the files <a href="https://github.com/diharaw/HybridRendering/blob/master/src/blue_noise.h">blue_noise.h</a>, <a href="https://github.com/diharaw/HybridRendering/blob/master/src/blue_noise.cpp">blue_noise.cpp</a> and <a href="https://github.com/diharaw/HybridRendering/blob/master/src/shaders/bnd_sampler.glsl">bnd_sampler.glsl</a> and was taken from the author&rsquo;s <a href="https://belcour.github.io/blog/research/publication/2019/06/18/animation-bluenoise.html">Unity sample</a>.</p>
+<h2 id="soft-shadows">Soft Shadows</h2>
+<figure><a href="https://diharaw.github.io/images/adventures_in_hybrid_rendering/6.jpg" target="_blank"><img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/6.jpg"
+         alt="Ray Traced Soft Shadows"/></a><figcaption>
+            <p>Ray Traced Soft Shadows</p>
+        </figcaption>
+</figure>
+
+<p>Now let&rsquo;s look at some actual implementation details for the Ray Traced effects in the sample, starting with Soft Shadows. The main problem with regular PCF filtered shadow maps is the fact that you don&rsquo;t get the nice soft penumbra you would usually get with something like a large area light. Of course you can approximate it using Percentage Closer Soft Shadows but the blocker search in that technique is only a poor approximation of the actual penumbra you&rsquo;d get in something like a path tracer, while having all the usual shadow mapping artefact to go with it. Ray Traced Soft Shadows on the other hand gives perfect penumbras free of peter panning or shadow acne artefact.</p>
+<figure><a href="https://diharaw.github.io/images/adventures_in_hybrid_rendering/26.jpg" target="_blank"><img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/26.jpg"
+         alt="Comparison of Shadow Maps and Ray Traced Soft Shadows from NVIDIA"/></a><figcaption>
+            <p>Comparison of Shadow Maps and Ray Traced Soft Shadows from NVIDIA</p>
+        </figcaption>
+</figure>
+
+<p>To simplify the actual implementation, the actual ray tracing is done in a compute shader using ray queries instead of the full ray tracing pipeline, since shadows does not require much complex ray tracing capabilities. The lack of setting up the Shader Binding Table makes the code relatively more readable as well.</p>
+<h3 id="ray-generation">Ray Generation</h3>
+<p>Since physically based soft shadows require an area light, which means that there is more than a single direction than we can fire a ray towards, an infinite number of directions actually. But since we&rsquo;re limited to a single ray per pixel, we have to randomly pick a direction towards the light aka randomly sample the light source. There&rsquo;s many ways to achieve this, but for this demo I used the method from the blue noise master <a href="https://blog.demofox.org/2020/05/16/using-blue-noise-for-raytraced-soft-shadows/">Alan Wolfe&rsquo;s blog post</a> <strong>[4]</strong>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">// Fetch a blue noise value for this frame.
+</span><span style="color:#75715e"></span>vec2 rnd_sample      <span style="color:#f92672">=</span> next_sample(current_coord);
+
+vec3 light_dir       <span style="color:#f92672">=</span> light_direction(light);
+
+vec3 light_tangent   <span style="color:#f92672">=</span> normalize(cross(light_dir, vec3(<span style="color:#ae81ff">0.0f</span>, <span style="color:#ae81ff">1.0f</span>, <span style="color:#ae81ff">0.0f</span>)));
+vec3 light_bitangent <span style="color:#f92672">=</span> normalize(cross(light_tangent, light_dir));
+
+<span style="color:#75715e">// calculate disk point
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">float</span> point_radius <span style="color:#f92672">=</span> light_radius(light) <span style="color:#f92672">*</span> sqrt(rng.x);
+<span style="color:#66d9ef">float</span> point_angle  <span style="color:#f92672">=</span> rng.y <span style="color:#f92672">*</span> <span style="color:#ae81ff">2.0f</span> <span style="color:#f92672">*</span> M_PI;
+vec2  disk_point   <span style="color:#f92672">=</span> vec2(point_radius <span style="color:#f92672">*</span> cos(point_angle), point_radius <span style="color:#f92672">*</span> sin(point_angle);   
+
+Wi <span style="color:#f92672">=</span> normalize(light_dir <span style="color:#f92672">+</span> disk_point.x <span style="color:#f92672">*</span> light_tangent <span style="color:#f92672">+</span> disk_point.y <span style="color:#f92672">*</span> light_bitangent);
+</code></pre></div><h3 id="optimisations">Optimisations</h3>
+<p>I&rsquo;ve also borrowed an interesting trick from the <a href="https://github.com/GPUOpen-Effects/FidelityFX-Denoiser">AMD FidelityFX Shadow Denoiser</a> <strong>[5]</strong> where they pack 32 ray hit results from an 8x4 portion of the screen into a 32-bit uint output image. This works out perfectly for shadows since the result of the visibility ray query is either true or false. Since I&rsquo;m using compute shaders for ray tracing, the local size is set to (8, 4, 1) so that each work group perfectly fits 32 rays. So each thread can trace a ray and bitwise-or the result into a shared variable that the first thread can write out into the output image once every thread has finished execution.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">shared uint g_visibility;
+
+uint result <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+
+<span style="color:#75715e">// Trace ray and store result...
+</span><span style="color:#75715e"></span>
+atomicOr(g_visibility, result <span style="color:#f92672">&lt;&lt;</span> gl_LocalInvocationIndex);
+
+barrier();
+
+<span style="color:#66d9ef">if</span> (gl_LocalInvocationIndex <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+    imageStore(i_Output, ivec2(gl_WorkGroupID.xy), uvec4(g_visibility));
+
+</code></pre></div><p>The beauty of packing the rays like this is that during the temporal accumulation pass, it makes it easier for us to do a really wide neighborhood clamp with very little texture fetches. And in this case, it&rsquo;s a 17x17 neighborhood. The FidelityFX Denoiser also calculates the neighborhood mean with a separable approach. For each thread we compute the horizontal mean across 17 pixels centered around the current pixel, meaning 8 pixels to the left and right. We also compute the horizontal mean values 8 pixels above and below the current x-value. We then store these values in shared memory, exposing them to the other threads in the work group. Once all the threads are past this point we can vertically gather the horizontal means from the earlier step to get the final neighborhood mean value. As you can probably tell by now, this <em>greatly</em> reduces the number of texture fetches you&rsquo;d usually need.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">// Compute horizontal mean values.
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">float</span> top    <span style="color:#f92672">=</span> horizontal_neighborhood_mean(ivec2(coord.x, coord.y <span style="color:#f92672">-</span> <span style="color:#ae81ff">8</span>));
+<span style="color:#66d9ef">float</span> middle <span style="color:#f92672">=</span> horizontal_neighborhood_mean(ivec2(coord.x, coord.y));
+<span style="color:#66d9ef">float</span> bottom <span style="color:#f92672">=</span> horizontal_neighborhood_mean(ivec2(coord.x, coord.y <span style="color:#f92672">+</span> <span style="color:#ae81ff">8</span>));
+
+<span style="color:#75715e">// Store horizontal mean values in shared memory.
+</span><span style="color:#75715e"></span>g_mean_accumulation[gl_LocalInvocationID.x][gl_LocalInvocationID.y]      <span style="color:#f92672">=</span> top;
+g_mean_accumulation[gl_LocalInvocationID.x][gl_LocalInvocationID.y <span style="color:#f92672">+</span> <span style="color:#ae81ff">8</span>]  <span style="color:#f92672">=</span> middle;
+g_mean_accumulation[gl_LocalInvocationID.x][gl_LocalInvocationID.y <span style="color:#f92672">+</span> <span style="color:#ae81ff">16</span>] <span style="color:#f92672">=</span> bottom;
+
+barrier();
+
+<span style="color:#66d9ef">float</span> mean <span style="color:#f92672">=</span> <span style="color:#ae81ff">0.0f</span>;
+
+<span style="color:#75715e">// Gather horizontal mean values.
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> y <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; y <span style="color:#f92672">&lt;=</span> <span style="color:#ae81ff">16</span>; y<span style="color:#f92672">++</span>)
+    mean <span style="color:#f92672">+=</span> g_mean_accumulation[gl_LocalInvocationID.x][gl_LocalInvocationID.y <span style="color:#f92672">+</span> y];
+
+<span style="color:#75715e">// Divide by weight to get the final neighborhood mean value.
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">return</span> mean <span style="color:#f92672">/</span> weight;
+</code></pre></div><p>The denoiser is also optimized to only run on tiles that contain at least a single penumbra shadow value, meaning that the variance that we calculate in SVGF is greater than 0.0 for any thread. A shared memory value is used as a flag which gets set by any of the threads in the work group if the condition is met. If denoising is needed, the tile coordinate is written to a buffer. If no denoising is needed, we write the tile coordinate to another buffer which contains a list of tiles that are fully in shadow. Afterwards we clear the final shadow mask image to white, then run an indirect compute dispatch to output 0.0 for the fully shadowed tiles, then finally denoise only the tiles that need it by running another indirect compute dispatch using the buffer we wrote to before.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">// If all the threads are in shadow, skip the À-Trous filter.
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">if</span> (depth <span style="color:#f92672">!=</span> <span style="color:#ae81ff">1.0f</span> <span style="color:#f92672">&amp;&amp;</span> output_visibility_variance.x <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0.0f</span>)
+    g_should_denoise <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;
+
+barrier();
+
+<span style="color:#66d9ef">if</span> (gl_LocalInvocationIndex <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+{
+    <span style="color:#66d9ef">if</span> (g_should_denoise <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span>)
+    {
+        uint idx                   <span style="color:#f92672">=</span> atomicAdd(DenoiseTileDispatchArgs.num_groups_x, <span style="color:#ae81ff">1</span>);
+        DenoiseTileData.coord[idx] <span style="color:#f92672">=</span> current_coord;
+    }
+    <span style="color:#66d9ef">else</span>
+    {
+        uint idx                  <span style="color:#f92672">=</span> atomicAdd(ShadowTileDispatchArgs.num_groups_x, <span style="color:#ae81ff">1</span>);
+        ShadowTileData.coord[idx] <span style="color:#f92672">=</span> current_coord;
+    }
+}
+</code></pre></div><h2 id="ambient-occlusion">Ambient Occlusion</h2>
+<figure><a href="https://diharaw.github.io/images/adventures_in_hybrid_rendering/7.jpg" target="_blank"><img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/7.jpg"
+         alt="Ray Traced Ambient Occlusion"/></a><figcaption>
+            <p>Ray Traced Ambient Occlusion</p>
+        </figcaption>
+</figure>
+
+<p>The Ambient Occlusion implementation in this sample is essentially the same as soft shadows, except with a slightly simplified denoiser. It still uses the 32 ray packing trick from AMD and also the same 17x17 neighborhood clamp with separable mean calculation. Where the denoiser differs is in the Spatial Filtering aspect which is only using a simple separable gaussian blur. I felt that the added complexity and performance hit of the full on À-Trous filter is not necessary for Ambient Occlusion and my assumption held up for the most part. However you do see some slight animated noise when looking at the AO by itself, probably due to the lack of variance driven blurring.</p>
+
+  
+  <link href="https://diharaw.github.io/css/twentytwenty-no-compass.css" rel="stylesheet" type="text/css" />
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+  <script src="https://diharaw.github.io/js/jquery.event.move.js"></script>
+  <script src="https://diharaw.github.io/js/jquery.twentytwenty.js"></script>
+  <script>
+    $(window).load(function(){
+      $("#ao_half_vs_full_res_img").twentytwenty({
+        default_offset_pct:  0.5 ,
+        no_overlay:  false ,
+        before_label: "Half Resolution",
+        after_label: "Full Resolution"
+      });
+    });
+    </script>
+
+<div id="ao_half_vs_full_res_img">
+ <img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/20.jpg" />
+ <img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/21.jpg" />
+</div>
+<p>The cost of AO is further cut down thanks to running it at a quarter size, or half resolution, of the back buffer. Since Ambient Occlusion is very diffuse-looking by nature, the upscaling doesn&rsquo;t have any negative effects on it, other than scaling up the noise artifacts, but it&rsquo;s nothing a good blur can&rsquo;t soften up. In addition to this I&rsquo;m using a simple <a href="https://github.com/diharaw/HybridRendering/blob/master/src/shaders/ao/ao_upsample.comp">Bilateral Upsample</a> using depth and normals to preserve edges in the output image without bleeding the occlusion values all over the place.</p>
+
+  
+  <link href="https://diharaw.github.io/css/twentytwenty-no-compass.css" rel="stylesheet" type="text/css" />
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+  <script src="https://diharaw.github.io/js/jquery.event.move.js"></script>
+  <script src="https://diharaw.github.io/js/jquery.twentytwenty.js"></script>
+  <script>
+    $(window).load(function(){
+      $("#ao_white_vs_blue_noise_img").twentytwenty({
+        default_offset_pct:  0.5 ,
+        no_overlay:  false ,
+        before_label: "White Noise",
+        after_label: "Blue Noise"
+      });
+    });
+    </script>
+
+<div id="ao_white_vs_blue_noise_img">
+ <img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/27.jpg" />
+ <img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/28.jpg" />
+</div>
+<p>As for the actual ray tracing pass itself, it&rsquo;s really nothing special here. 1spp as usual, with rays generated in a uniformly sampled cosine lobe. The secret sauce really is in the use of blue noise which greatly improves the effectiveness of the denoiser. The remaining noise in the output image can probably be gotten rid of with the use of a second temporal pass such as a temporal pre-pass or a TAA-style stabilization pass such as the one from NVIDIA&rsquo;s Recurrent Blur Denoiser.</p>
+<h3 id="optimisations-1">Optimisations</h3>
+<p>The tile-based optimization used here is similar to the one from Soft Shadows, but it only needs one indirect dispatch since AO doesn&rsquo;t usually have massive fully shadowed areas as you&rsquo;d see with shadows, so if a tile has at least a single AO value below 1.0, we mark that tile for denoising and write the tile coords. The rest is the same as before.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">// If at least one thread has an occlusion value, perform denoising.
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">if</span> (out_ao <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">1.0f</span>)
+    g_should_denoise <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;
+
+barrier();
+
+<span style="color:#66d9ef">if</span> (g_should_denoise <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">&amp;&amp;</span> gl_LocalInvocationIndex <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+{
+    uint idx                   <span style="color:#f92672">=</span> atomicAdd(DenoiseTileDispatchArgs.num_groups_x, <span style="color:#ae81ff">1</span>);
+    DenoiseTileData.coord[idx] <span style="color:#f92672">=</span> current_coord;
+}
+</code></pre></div><h2 id="reflections">Reflections</h2>
+<figure><a href="https://diharaw.github.io/images/adventures_in_hybrid_rendering/8.jpg" target="_blank"><img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/8.jpg"
+         alt="Ray Traced Reflections"/></a><figcaption>
+            <p>Ray Traced Reflections</p>
+        </figcaption>
+</figure>
+
+<p>Now this is where things start getting interesting. The implementation here is quite straightforward, with the ray tracing done with an RT pipeline as opposed to a ray query because it will let me handle more complex cases such as alpha testing more easily. The rays are generated by importance sampling the GGX microfacet BRDF and uses a single bounce. Denoising is done through SVGF with a slight twist to the temporal reprojection pass which I will go into a bit further on.</p>
+<h3 id="reprojection">Reprojection</h3>
+<p>Typical temporal reprojection is done by taking the current pixels' motion vector and subtracting it from the screen space position. Let&rsquo;s call this &ldquo;Surface Point Reprojection&rdquo;. While this works fine for reprojecting diffuse techniques such as shadows, AO and GI, anything that is view-dependent such as reflections will have some issues on certain objects when reprojected using this technique. This is because of the whole parallax effect you&rsquo;d see when inspecting reflections while moving your viewpoint around. Using Surface Point Reprojection we would end up with a ton of ghosting and smearing when moving the camera around.</p>
+
+
+<div class="embed-responsive embed-responsive-16by9">
+    <div class="embed-responsive-item" id="surface_reprojection_flat"></div>
+</div>
+  
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@clappr/player@latest/dist/clappr.min.js"></script>
+<script>
+    var player = new Clappr.Player({
+      source: "\/videos\/adventures_in_hybrid_rendering\/2.mp4",
+      parentId: "#surface_reprojection_flat",
+      height:  427 ,
+      width: '100%'
+    });
+</script>
+<p>Let&rsquo;s think, what do we really need for reprojecting reflections? We need to know where the surface that is reflected within the current pixel was located in the previous frame, <em>not</em> where the current pixel itself was located in the previous frame. This is quite the tough problem to solve and many people have taken a crack at it, such as <strong>[6]</strong> and most recently <strong>[7]</strong> from Ray Tracing Gems by the fine folks over at UL Benchmarks.</p>
+<figure><a href="https://diharaw.github.io/images/adventures_in_hybrid_rendering/31.jpg" target="_blank"><img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/31.jpg"
+         alt="Illustration of the Virtual Hit Point used to reproject Ray Traced Reflections"/></a><figcaption>
+            <p>Illustration of the Virtual Hit Point used to reproject Ray Traced Reflections</p>
+        </figcaption>
+</figure>
+
+<p>While those ideas seem great, they are also quite complicated and I just couldn&rsquo;t wrap my head around it. So I went ahead and borrowed another idea from the FidelityFX Denoiser. How they achieve Hit Point Reprojection is by storing the ray hit distance in the ray tracing pass, and in the reprojection pass using that distance to extending the primary ray <em>into</em> the surface, which essentially gives us the Virtual Position of the reflected point. Now if we take this Virtual Position and transform it reproject it into screen space using the previous frames' View Projection matrix it would roughly give us where the Virtual Position was in the previous frame in screen space coordinates, which is exactly what we are looking for.</p>
+
+
+<div class="embed-responsive embed-responsive-16by9">
+    <div class="embed-responsive-item" id="hit_reprojection_flat"></div>
+</div>
+  
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@clappr/player@latest/dist/clappr.min.js"></script>
+<script>
+    var player = new Clappr.Player({
+      source: "\/videos\/adventures_in_hybrid_rendering\/3.mp4",
+      parentId: "#hit_reprojection_flat",
+      height:  427 ,
+      width: '100%'
+    });
+</script>
+<p>As you can see it does quite a decent job at reprojecting reflections on flat surfaces, but does tend to breakdown on curved surfaces. A solution for this was mentioned in the <a href="https://link.springer.com/content/pdf/10.1007/978-1-4842-4427-2_25.pdf">Hybrid Rendering for Real-Time Ray Tracing chapter</a> by SEED in Ray Tracing Gems <strong>[8]</strong> where they described using two different reprojection techniques: Hit Point Reprojection on flat surfaces and Surface Reprojection on curved surfaces. This solution proved quite effective on my sample as well.</p>
+
+
+<div class="embed-responsive embed-responsive-16by9">
+    <div class="embed-responsive-item" id="surface_vs_hit_reprojection_curved"></div>
+</div>
+  
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@clappr/player@latest/dist/clappr.min.js"></script>
+<script>
+    var player = new Clappr.Player({
+      source: "\/videos\/adventures_in_hybrid_rendering\/1.mp4",
+      parentId: "#surface_vs_hit_reprojection_curved",
+      height:  427 ,
+      width: '100%'
+    });
+</script>
+<p>But how did I determine the curvature of a surface you say? Well, let me present to you what I like to call &lsquo;The Poor Man&rsquo;s Curvature Estimation&rsquo; which is just an approximation using the partial derivatives of the geometric normal and written out into the G-Buffer.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">float</span> <span style="color:#a6e22e">compute_curvature</span>(<span style="color:#66d9ef">float</span> depth)
+{
+    vec3 dx <span style="color:#f92672">=</span> dFdx(FS_IN_Normal);
+    vec3 dy <span style="color:#f92672">=</span> dFdy(FS_IN_Normal);
+
+    <span style="color:#66d9ef">float</span> x <span style="color:#f92672">=</span> dot(dx, dx);
+    <span style="color:#66d9ef">float</span> y <span style="color:#f92672">=</span> dot(dy, dy);
+
+    <span style="color:#66d9ef">return</span> pow(max(x, y), <span style="color:#ae81ff">0.5f</span>);
+}
+</code></pre></div><h3 id="indirect-lighting">Indirect Lighting</h3>
+<p>When shading the hit points in the ray tracing pass it&rsquo;s not enough to just do direct lighting because that by itself will make the reflections in shadows regions look pitch black. Of course, you can get away with a fixed ambient term but we can get better and more accurate looking results by using proper indirect diffuse and specular. For diffuse I&rsquo;m using the DDGI probes generated in the current frame which really helps lighten up the darker areas.</p>
+
+  
+  <link href="https://diharaw.github.io/css/twentytwenty-no-compass.css" rel="stylesheet" type="text/css" />
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+  <script src="https://diharaw.github.io/js/jquery.event.move.js"></script>
+  <script src="https://diharaw.github.io/js/jquery.twentytwenty.js"></script>
+  <script>
+    $(window).load(function(){
+      $("#reflections_indirect_diffuse_img").twentytwenty({
+        default_offset_pct:  0.5 ,
+        no_overlay:  false ,
+        before_label: "Without Indirect Diffuse",
+        after_label: "With Indirect Diffuse"
+      });
+    });
+    </script>
+
+<div id="reflections_indirect_diffuse_img">
+ <img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/16.jpg" />
+ <img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/17.jpg" />
+</div>
+<p>For specular we could use another ray bounce but since this is a real-time renderer we really have to try and keep the ray count down to a minimum, so because of that I&rsquo;m just sampling the prefiltered environment map similar to how we would sample indirect specular with Image Based Lighting. This can definitely lead to light leaking, especially in indoor scenes which is why it is a good idea to instead sample local reflection probes instead of a global reflection probe so that the indirect specular would more closely match the lighting of the surrounding environment. But for the purposes of this demo a single global prefiltered environment map fits the bill.</p>
+
+  
+  <link href="https://diharaw.github.io/css/twentytwenty-no-compass.css" rel="stylesheet" type="text/css" />
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+  <script src="https://diharaw.github.io/js/jquery.event.move.js"></script>
+  <script src="https://diharaw.github.io/js/jquery.twentytwenty.js"></script>
+  <script>
+    $(window).load(function(){
+      $("#reflections_indirect_specular_img").twentytwenty({
+        default_offset_pct:  0.5 ,
+        no_overlay:  false ,
+        before_label: "Without IBL",
+        after_label: "With IBL"
+      });
+    });
+    </script>
+
+<div id="reflections_indirect_specular_img">
+ <img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/18.jpg" />
+ <img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/19.jpg" />
+</div>
+<h3 id="optimisations-2">Optimisations</h3>
+<p>Because the denoising process is quite expensive I try not to denoise pixels that don&rsquo;t actually require any denoising. For example, if a pixel has zero roughness, the generated rays will be equal to a perfect specular reflection, or in other words a perfect mirror. Since mirror reflections are already perfectly converged at 1spp, we can just skip the denoiser for such pixels. To reduce the need for the denoiser even more, I&rsquo;ve added a mirror reflection threshold value that basically makes pixels with roughness values within a certain delta value of 0.0 behave as mirror reflections. By default this value is set to 0.05, so any surface with values below 0.05 will receive mirror reflections and will not need any denoising. Not only does this reduce time from the denoiser, it also makes the rays more coherent in these regions, meaning that they will all travel in the same direction, resulting in ray hits that are closer together. This means that threads in a warp will have a greater chance of sampling the same texture and geometry, allowing for better cache utilization.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">if</span> (roughness <span style="color:#f92672">&lt;</span> MIRROR_REFLECTIONS_ROUGHNESS_THRESHOLD)
+{
+    vec3 R <span style="color:#f92672">=</span> reflect(<span style="color:#f92672">-</span>Wo, N.xyz);
+
+    <span style="color:#75715e">// Trace a ray along mirror reflection direction.
+</span><span style="color:#75715e"></span>    traceRayEXT(u_TopLevelAS, ray_flags, cull_mask, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, ray_origin, tmin, R, tmax, <span style="color:#ae81ff">0</span>);
+}
+<span style="color:#66d9ef">else</span>
+{
+    vec2 Xi <span style="color:#f92672">=</span> next_sample(current_coord) <span style="color:#f92672">*</span> u_PushConstants.trim;
+
+    vec4 Wh_pdf <span style="color:#f92672">=</span> importance_sample_ggx(Xi, N, roughness);
+
+    <span style="color:#66d9ef">float</span> pdf <span style="color:#f92672">=</span> Wh_pdf.w;
+    vec3  Wi  <span style="color:#f92672">=</span> reflect(<span style="color:#f92672">-</span>Wo, Wh_pdf.xyz);
+    
+    <span style="color:#75715e">// Trace a ray along an importance sampled direction.
+</span><span style="color:#75715e"></span>    traceRayEXT(u_TopLevelAS, ray_flags, cull_mask, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, ray_origin, tmin, Wi, tmax, <span style="color:#ae81ff">0</span>);
+}
+</code></pre></div><p>Similarly, when the roughness value is past a certain point the reflection becomes rather diffuse as the ray directions are quite spread out. I&rsquo;ve used this to approximate the reflections of pixels with a roughness value above a certain threshold using the DDGI probes. While not being a perfect match to the fully ray traced result, it&rsquo;s a decent enough approximation as can be seen below. The beauty of this is that you don&rsquo;t even need to trace the ray for these pixels. You can simply check the roughness value, and if it is above this threshold you can sample the DDGI probes and directly write the output into the image. And there is no need to denoise these pixels either. However you do loose out on shadows within reflections in those regions, but it isn&rsquo;t a big deal since fully rough surfaces are pretty much diffuse so you can rely on the shadow mask for any shadows.</p>
+
+  
+  <link href="https://diharaw.github.io/css/twentytwenty-no-compass.css" rel="stylesheet" type="text/css" />
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+  <script src="https://diharaw.github.io/js/jquery.event.move.js"></script>
+  <script src="https://diharaw.github.io/js/jquery.twentytwenty.js"></script>
+  <script>
+    $(window).load(function(){
+      $("#reflections_ddgi_approx_img").twentytwenty({
+        default_offset_pct:  0.5 ,
+        no_overlay:  false ,
+        before_label: "Without DDGI Approximation",
+        after_label: "With DDGI Approximation"
+      });
+    });
+    </script>
+
+<div id="reflections_ddgi_approx_img">
+ <img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/24.jpg" />
+ <img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/25.jpg" />
+</div>
+<p>As always the denoising here is done on a per-tile basis; tiles that need denoising are put into one buffer and the tiles that only require a straight up copy into another. Both are then executed with an indirect compute dispatch. Copy shader just directly copies the output from the temporal accumulation pass into the final output image. A tile is said to need denoising if there is at least a single pixel between the Mirror Reflection Threshold and the DDGI Approximation Threshold.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">// If all the threads are in within the roughness range, skip the À-Trous filter.
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">if</span> (depth <span style="color:#f92672">!=</span> <span style="color:#ae81ff">1.0f</span> <span style="color:#f92672">&amp;&amp;</span> roughness <span style="color:#f92672">&gt;=</span> MIRROR_REFLECTIONS_ROUGHNESS_THRESHOLD)
+{
+    <span style="color:#66d9ef">if</span> (u_PushConstants.approximate_with_ddgi <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span>)
+    {
+        <span style="color:#66d9ef">if</span> (roughness <span style="color:#f92672">&lt;=</span> DDGI_REFLECTIONS_ROUGHNESS_THRESHOLD)
+            g_should_denoise <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;
+    }
+    <span style="color:#66d9ef">else</span>
+        g_should_denoise <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;
+}
+
+barrier();
+
+<span style="color:#66d9ef">if</span> (gl_LocalInvocationIndex <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+{
+    <span style="color:#66d9ef">if</span> (g_should_denoise <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span>)
+    {
+        uint idx                   <span style="color:#f92672">=</span> atomicAdd(DenoiseTileDispatchArgs.num_groups_x, <span style="color:#ae81ff">1</span>);
+        DenoiseTileData.coord[idx] <span style="color:#f92672">=</span> current_coord;
+    }
+    <span style="color:#66d9ef">else</span>
+    {
+        uint idx                <span style="color:#f92672">=</span> atomicAdd(CopyTileDispatchArgs.num_groups_x, <span style="color:#ae81ff">1</span>);
+        CopyTileData.coord[idx] <span style="color:#f92672">=</span> current_coord;
+    }
+}
+</code></pre></div><h2 id="global-illumination">Global Illumination</h2>
+<figure><a href="https://diharaw.github.io/images/adventures_in_hybrid_rendering/9.jpg" target="_blank"><img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/9.jpg"
+         alt="Ray Traced Global Illumination"/></a><figcaption>
+            <p>Ray Traced Global Illumination</p>
+        </figcaption>
+</figure>
+
+<p>The GI implementation for this sample started off as a simple 1spp, 2-bounce path trace thing denoised using SVGF, but I was never satisfied with how noisy it was in disoccluded regions. And the performance was rather horrendous as well. So I decided to scrap that and look into <a href="https://jcgt.org/published/0008/02/01/">Dynamic Diffuse Global Illumination</a> <strong>[9]</strong>.</p>
+<p>The idea is quite simple: It&rsquo;s basically a grid of irradiance probes that are updated in real-time using ray tracing with additional depth information stored at each probe to prevent light leakage. In my opinion, the true beauty of this technique is the fact that it requires zero denoising and looks very stable compared to the other techniques in this sample. But this stability comes at the cost of temporal lag, meaning that the GI takes time to adapt to fast moving light sources or geometry since we&rsquo;re blending the probes with new information over time.</p>
+<p>My implementation sticks quite close to the original so I&rsquo;ll only be going over the optimizations I&rsquo;ve made. If you&rsquo;re unfamiliar with the technique, please read the paper and come back to this.</p>
+<h3 id="probe-update">Probe Update</h3>
+<p>The <a href="https://jcgt.org/published/0008/02/01/">accompanying code</a> with the paper samples each ray direction and radiance result for each texel of a probe which as you can imagine takes a rather heavy toll on texturing, but this is unavoidable seeing as the sample does the probe update in a pixel shader.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">// For each ray
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> r <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; r <span style="color:#f92672">&lt;</span> num_rays; <span style="color:#f92672">++</span>r)
+{
+    vec3  ray_direction      <span style="color:#f92672">=</span> texture(sRayDirections, coord).xyz;
+
+    vec3  ray_hit_radiance   <span style="color:#f92672">=</span> texture(sRayRadiance, coord).xyz <span style="color:#f92672">*</span> energy_conservation;
+
+    vec3 texel_direction <span style="color:#f92672">=</span> oct_decode(normalized_oct_coord(current_coord, PROBE_SIDE_LENGTH));
+
+    <span style="color:#66d9ef">float</span> weight <span style="color:#f92672">=</span> max(<span style="color:#ae81ff">0.0</span>, dot(texel_direction, ray_direction));
+
+    <span style="color:#66d9ef">if</span> (weight <span style="color:#f92672">&gt;=</span> FLT_EPS)
+    {
+        result <span style="color:#f92672">+=</span> vec3(ray_hit_radiance <span style="color:#f92672">*</span> weight);
+          
+        total_weight <span style="color:#f92672">+=</span> weight;
+    }
+}
+</code></pre></div><p>Since I&rsquo;m using a compute shader it gave me plenty of room to optimize this. Since all the ray directions and radiance values need to be read by every texel in the probe, this seemed like the ideal place to make use of some shared memory. I made sure that each workgroup maps to a single probe and then created a small cache in shared memory for the ray direction and radiance/depth values and populate this cache in parallel with each thread loading in a single value. My local workgroup size for this was 8x8x1 for radiance probes and 16x16x1 for depth probes.</p>
+<p>Having 64 rays per frame per probe maps perfectly in the case of radiance probes since each workgroup has 8x8=64 threads, but if the ray count is higher surely we can make the cache larger and make some threads load more than one value right? Sure, while that is possible it is not a good idea because using too much shared memory will just reduce GPU occupancy resulting in worse performance. The solution I came up with that suits any number of rays is to keep the cache size constant and gather the rays in multiple batches as seen below.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">vec3  result       <span style="color:#f92672">=</span> vec3(<span style="color:#ae81ff">0.0f</span>);
+<span style="color:#66d9ef">float</span> total_weight <span style="color:#f92672">=</span> <span style="color:#ae81ff">0.0f</span>;
+
+uint remaining_rays <span style="color:#f92672">=</span> ddgi.rays_per_probe;
+uint offset <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+
+<span style="color:#66d9ef">while</span> (remaining_rays <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span>)
+{
+    uint num_rays <span style="color:#f92672">=</span> min(CACHE_SIZE, remaining_rays);
+        
+    populate_cache(relative_probe_id, offset, num_rays);
+
+    barrier();
+
+    gather_rays(current_coord, num_rays, result, total_weight);
+
+    barrier();
+
+    remaining_rays <span style="color:#f92672">-=</span> num_rays;
+    offset <span style="color:#f92672">+=</span> num_rays;
+}
+    
+<span style="color:#66d9ef">if</span> (total_weight <span style="color:#f92672">&gt;</span> FLT_EPS)
+    result <span style="color:#f92672">/=</span> total_weight;
+</code></pre></div><h3 id="border-update">Border Update</h3>
+
+  
+  <link href="https://diharaw.github.io/css/twentytwenty-no-compass.css" rel="stylesheet" type="text/css" />
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+  <script src="https://diharaw.github.io/js/jquery.event.move.js"></script>
+  <script src="https://diharaw.github.io/js/jquery.twentytwenty.js"></script>
+  <script>
+    $(window).load(function(){
+      $("#border_update_img").twentytwenty({
+        default_offset_pct:  0.5 ,
+        no_overlay:  false ,
+        before_label: "Without Border Update",
+        after_label: "With Border Update"
+      });
+    });
+    </script>
+
+<div id="border_update_img">
+ <img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/12.jpg" />
+ <img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/13.jpg" />
+</div>
+<p>The border update step which is required in order to prevent ugly artefacts when sampling the edges of the probes using bilinear filtering is often not well described so I&rsquo;ll go into detail on how I tackled it in this sample. I started off by looking the diagrams from <strong>[10]</strong> which shows which probe texels need to be copied for which border texel and went ahead and generated the offsets for these coordinates relative to the beginning coordinate of the probe within the probe texture. Using this makes the copy super straightforwad with a couple of lines.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">copy_texel</span>(ivec2 current_coord, uint index)
+{
+    ivec2 src_coord <span style="color:#f92672">=</span> current_coord <span style="color:#f92672">+</span> g_offsets[index].xy;
+    ivec2 dst_coord <span style="color:#f92672">=</span> current_coord <span style="color:#f92672">+</span> g_offsets[index].zw;
+
+<span style="color:#75715e">#if defined(DEPTH_PROBE)    
+</span><span style="color:#75715e"></span>    imageStore(i_OutputDepth, dst_coord, imageLoad(i_OutputDepth, src_coord));
+<span style="color:#75715e">#else   
+</span><span style="color:#75715e"></span>    imageStore(i_OutputIrradiance, dst_coord, imageLoad(i_OutputIrradiance, src_coord));
+<span style="color:#75715e">#endif
+</span><span style="color:#75715e"></span>}
+</code></pre></div><p>The entire thing is done within a single compute shader with a local workgroup size equalling 4x the probe side length. This allows every border texel on the sides to be copied by its' own thread. However the 4 corner texels get missed out because of this, so I just repurposed the first 4 threads to copy those over.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">const</span> ivec2 current_coord <span style="color:#f92672">=</span> (ivec2(gl_WorkGroupID.xy) <span style="color:#f92672">*</span> ivec2(PROBE_SIZE_WITH_BORDER)) <span style="color:#f92672">+</span> ivec2(<span style="color:#ae81ff">1</span>);
+
+copy_texel(current_coord, gl_LocalInvocationIndex);
+
+<span style="color:#75715e">// Copy corner texels
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">if</span> (gl_LocalInvocationIndex <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">4</span>)
+    copy_texel(current_coord, (NUM_THREADS_X <span style="color:#f92672">*</span> NUM_THREADS_Y) <span style="color:#f92672">+</span> gl_LocalInvocationIndex);
+</code></pre></div><h3 id="probe-sampling">Probe Sampling</h3>
+<p>Since sampling the probe grid needs 16 samples per pixel (8 irradiance, 8 depth), it&rsquo;s pretty expensive when doing it in the deferred shading pass at full resolution. Since Diffuse GI is rather low-frequency, we can get away with sampling it at a much much lower resolution. In my sample, I&rsquo;m sampling the probe grid in a separate pass at half resolution and doing a bilateral upsample to bring it back up to full resolution while preserving edges. This seemd to work rather nicely and runs much much faster than the full resolution equivalent with nearly identical visual quality.</p>
+
+  
+  <link href="https://diharaw.github.io/css/twentytwenty-no-compass.css" rel="stylesheet" type="text/css" />
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+  <script src="https://diharaw.github.io/js/jquery.event.move.js"></script>
+  <script src="https://diharaw.github.io/js/jquery.twentytwenty.js"></script>
+  <script>
+    $(window).load(function(){
+      $("#gi_half_vs_full_res_img").twentytwenty({
+        default_offset_pct:  0.5 ,
+        no_overlay:  false ,
+        before_label: "Half Resolution",
+        after_label: "Full Resolution"
+      });
+    });
+    </script>
+
+<div id="gi_half_vs_full_res_img">
+ <img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/22.jpg" />
+ <img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/23.jpg" />
+</div>
+<h2 id="conclusion">Conclusion</h2>
+<p>So these were some of the noteworthy things I&rsquo;ve learned throughout the process of making this sample. Hope this post helped you understand what the code actually does and maybe even gave you a few ideas on how to tweak your own Hybrid Rendering Pipelines. There are plenty more techniques to try out such as Ray Traced Translucency, Transparent Shadows and Order Independent Transparency to name a few. Also a simplified denoiser that doesn&rsquo;t just use SVGF for everything would be nice! I might just save some of these for a future blog post. But until then, have fun with this sample!</p>
+<h2 id="references">References</h2>
+<ul>
+<li><strong>[1]</strong> <a href="https://research.nvidia.com/publication/2017-07_Spatiotemporal-Variance-Guided-Filtering%3A">Spatiotemporal Variance-Guided Filtering</a></li>
+<li><strong>[2]</strong> <a href="https://resources.nvidia.com/gtcd-2020/GTC2020s22699">Fast Denoising with Self Stabilizing Recurrent Blurs</a></li>
+<li><strong>[3]</strong> <a href="https://belcour.github.io/blog/slides/2019-sampling-bluenoise/index.html">A Low-Discrepancy Sampler that Distributes Monte Carlo Errors as a Blue Noise in Screen Space</a></li>
+<li><strong>[4]</strong> <a href="https://blog.demofox.org/2020/05/16/using-blue-noise-for-raytraced-soft-shadows/">Using Blue Noise For Raytraced Soft Shadows</a></li>
+<li><strong>[5]</strong> <a href="https://github.com/GPUOpen-Effects/FidelityFX-Denoiser">AMD FidelityFX Shadow Denoiser</a></li>
+<li><strong>[6]</strong> <a href="http://bitsquid.blogspot.com/2017/06/reprojecting-reflections_22.html">Reprojecting Reflections</a></li>
+<li><strong>[7]</strong> <a href="http://www.realtimerendering.com/raytracinggems/unofficial_RayTracingGems_v1.4.pdf">Accurate Real-Time Specular Reflections with Radiance Caching</a></li>
+<li><strong>[8]</strong> <a href="https://link.springer.com/content/pdf/10.1007/978-1-4842-4427-2_25.pdf">Hybrid Rendering for Real-Time Ray Tracing</a></li>
+<li><strong>[9]</strong> <a href="https://jcgt.org/published/0008/02/01/">Dynamic Diffuse Global Illumination with Ray-Traced Irradiance Fields</a></li>
+<li><strong>[10]</strong> <a href="https://monter.handmade.network/blog/p/7288-engine_work__global_illumination_with_irradiance_probes">Engine Work: Global Illumination with Irradiance Probes</a></li>
+</ul>
+
+            </div>
+        </article>
+
+        <hr />
+
+        <div class="post-info">
+            
+    <p>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg>
+
+        <span class="tag"><a href="https://diharaw.github.io/tags/ray-tracing/">Ray Tracing</a></span>
+        <span class="tag"><a href="https://diharaw.github.io/tags/vulkan/">Vulkan</a></span>
+        
+    </p>
+
+            
+  		</div>
+    </main>
+
+            </div>
+
+            
+                <footer class="footer">
+    
+    
+</footer>
+
+            
+        </div>
+
+        
+
+
+
+<script type="text/javascript" src="https://diharaw.github.io/bundle.min.599099f1f14b78b657d524b28e10e0c5098e7cd46e9c7aed73d577068a276c3ff1bb234cbf29cb313333e83cf411727b43157c91ce5b809e2ffc81664614608e.js" integrity="sha512-WZCZ8fFLeLZX1SSyjhDgxQmOfNRunHrtc9V3BoonbD/xuyNMvynLMTMz6Dz0EXJ7QxV8kc5bgJ4v/IFmRhRgjg=="></script>
+
+
+
+    </body>
+</html>

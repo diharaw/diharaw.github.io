@@ -6,7 +6,18 @@
     <description>Recent content on Dihara Wijetunga</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <copyright>&lt;a href=&#34;https://creativecommons.org/licenses/by-nc/4.0/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;CC BY-NC 4.0&lt;/a&gt;</copyright><atom:link href="https://diharaw.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <copyright>&lt;a href=&#34;https://creativecommons.org/licenses/by-nc/4.0/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;CC BY-NC 4.0&lt;/a&gt;</copyright>
+    <lastBuildDate>Mon, 27 Sep 2021 19:20:56 +0100</lastBuildDate><atom:link href="https://diharaw.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Adventures in Hybrid Rendering</title>
+      <link>https://diharaw.github.io/post/adventures_in_hybrid_rendering/</link>
+      <pubDate>Mon, 27 Sep 2021 19:20:56 +0100</pubDate>
+      
+      <guid>https://diharaw.github.io/post/adventures_in_hybrid_rendering/</guid>
+      <description>As an accompanying piece to my recently released Hybrid Rendering sample, this blog post dives into some of the techniques and optimizations used and will help anyone interested to understand the project.
+Before going any further let&amp;rsquo;s answer the question &amp;ldquo;Why hybrid rendering?&amp;rdquo;. In a typical rasterization based rendering pipeline, certain effects such as Global Illumination, Reflections and Soft Shadows have to be approximated using either screen space techniques, offline baking or other approaches which typically lead to less-than-believable results in many cases.</description>
+    </item>
+    
     <item>
       <title>Resume</title>
       <link>https://diharaw.github.io/resume/</link>
@@ -42,7 +53,7 @@ My main skillset includes proficiency with with C/C++ and multithreading, knowle
       Rasterator
       Deferred Decals
       Animation Systems
-    </description>
+     </description>
     </item>
     
   </channel>
