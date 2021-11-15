@@ -50,7 +50,7 @@ Before going any further let&amp;rsquo;s answer the question &amp;ldquo;Why hybr
 <meta itemprop="description" content="As an accompanying piece to my recently released Hybrid Rendering sample, this blog post dives into some of the techniques and optimizations used and will help anyone interested to understand the project.
 Before going any further let&rsquo;s answer the question &ldquo;Why hybrid rendering?&rdquo;. In a typical rasterization based rendering pipeline, certain effects such as Global Illumination, Reflections and Soft Shadows have to be approximated using either screen space techniques, offline baking or other approaches which typically lead to less-than-believable results in many cases."><meta itemprop="datePublished" content="2021-11-15T22:52:12+00:00" />
 <meta itemprop="dateModified" content="2021-11-15T22:52:12+00:00" />
-<meta itemprop="wordCount" content="5759"><meta itemprop="image" content="https://diharaw.github.io"/>
+<meta itemprop="wordCount" content="5789"><meta itemprop="image" content="https://diharaw.github.io"/>
 <meta itemprop="keywords" content="Ray Tracing,Vulkan," />
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://diharaw.github.io"/>
@@ -198,7 +198,7 @@ Before going any further let&rsquo;s answer the question &ldquo;Why hybrid rende
 </div>
 <p>Since real-time rendering applications have a tight frame time budget, adding ray tracing to the mix means that our ray budget for a single frame needs to be kept to a minimum in order to hit our frame rate target. Because of this, the rays-per-pixel number, or more commonly known as samples-per-pixel (spp), is usually 1 or 2 for most techniques.</p>
 <p>While such a low ray count is great performance-wise, visually it results in a noisy output especially for effects with some randomness such as Soft Shadows or Glossy Reflections. They simply cannot be rendered correctly with just a single ray per-frame. This is where denoising comes in, which attempts to take the noisy output of the ray tracing pass and clean it up using filters.</p>
-<p>The main denoising algorithm used in this sample is based on <a href="https://research.nvidia.com/publication/2017-07_Spatiotemporal-Variance-Guided-Filtering%3A">Spatiotemporal Variance-Guided Filtering (SVGF)</a> <strong>[1]</strong>. The algorithm is split into two main parts: Temporal and Spatial filtering.</p>
+<p>The main denoising algorithm used in this sample is based on <a href="https://research.nvidia.com/publication/2017-07_Spatiotemporal-Variance-Guided-Filtering%3A">Spatiotemporal Variance-Guided Filtering (SVGF)</a> <strong>[1]</strong>. The algorithm is split into two main parts: Temporal and Spatial filtering. The sections below will try to explain SVGF in a simplified way for dummies such as myself. If you&rsquo;re looking for the gory details, please do read the original paper.</p>
 <h3 id="temporal-filtering">Temporal Filtering</h3>
 <p>Even though we can only afford to shoot one ray per pixel in our use case, we can get around this limitation by accumulating samples <em>over time</em>, meaning that we can reuse older samples to create a cleaner, less noisy image. This is done by essentially finding where the current pixel was in the previous frame and then accumulating the current pixel into that history sample.</p>
 <p>The way we find where the pixel was in the previous frame is by using the current pixels motion vector which will allow us to find where this particular pixel was during the previous frame in screen space.</p>
@@ -299,8 +299,9 @@ moments.g    <span style="color:#f92672">=</span> moments.r <span style="color:#
 {
     <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> xx <span style="color:#f92672">=</span> <span style="color:#f92672">-</span>FILTER_RADIUS; xx <span style="color:#f92672">&lt;=</span> FILTER_RADIUS; xx<span style="color:#f92672">++</span>)
     {
-        <span style="color:#66d9ef">const</span> ivec2 sample_coord <span style="color:#f92672">=</span> coord <span style="color:#f92672">+</span> ivec2(xx, yy) <span style="color:#f92672">*</span> STEP_SIZE; <span style="color:#75715e">// STEP SIZE = 1 &lt;&lt; filter_iteration
-</span><span style="color:#75715e"></span>
+        <span style="color:#75715e">// STEP SIZE = 1 &lt;&lt; filter_iteration
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">const</span> ivec2 sample_coord <span style="color:#f92672">=</span> coord <span style="color:#f92672">+</span> ivec2(xx, yy) <span style="color:#f92672">*</span> STEP_SIZE; 
+
         <span style="color:#75715e">// Apply filter...
 </span><span style="color:#75715e"></span>    }
 }
