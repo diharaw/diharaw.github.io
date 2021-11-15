@@ -7,11 +7,11 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&lt;a href=&#34;https://creativecommons.org/licenses/by-nc/4.0/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;CC BY-NC 4.0&lt;/a&gt;</copyright>
-    <lastBuildDate>Mon, 27 Sep 2021 19:20:56 +0100</lastBuildDate><atom:link href="https://diharaw.github.io/tags/ray-tracing/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 15 Nov 2021 22:52:12 +0000</lastBuildDate><atom:link href="https://diharaw.github.io/tags/ray-tracing/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Adventures in Hybrid Rendering</title>
       <link>https://diharaw.github.io/post/adventures_in_hybrid_rendering/</link>
-      <pubDate>Mon, 27 Sep 2021 19:20:56 +0100</pubDate>
+      <pubDate>Mon, 15 Nov 2021 22:52:12 +0000</pubDate>
       
       <guid>https://diharaw.github.io/post/adventures_in_hybrid_rendering/</guid>
       <description>As an accompanying piece to my recently released Hybrid Rendering sample, this blog post dives into some of the techniques and optimizations used and will help anyone interested to understand the project.

@@ -48,9 +48,9 @@ Before going any further let&amp;rsquo;s answer the question &amp;ldquo;Why hybr
 
 <meta itemprop="name" content="Adventures in Hybrid Rendering">
 <meta itemprop="description" content="As an accompanying piece to my recently released Hybrid Rendering sample, this blog post dives into some of the techniques and optimizations used and will help anyone interested to understand the project.
-Before going any further let&rsquo;s answer the question &ldquo;Why hybrid rendering?&rdquo;. In a typical rasterization based rendering pipeline, certain effects such as Global Illumination, Reflections and Soft Shadows have to be approximated using either screen space techniques, offline baking or other approaches which typically lead to less-than-believable results in many cases."><meta itemprop="datePublished" content="2021-09-27T19:20:56+01:00" />
-<meta itemprop="dateModified" content="2021-09-27T19:20:56+01:00" />
-<meta itemprop="wordCount" content="5581"><meta itemprop="image" content="https://diharaw.github.io"/>
+Before going any further let&rsquo;s answer the question &ldquo;Why hybrid rendering?&rdquo;. In a typical rasterization based rendering pipeline, certain effects such as Global Illumination, Reflections and Soft Shadows have to be approximated using either screen space techniques, offline baking or other approaches which typically lead to less-than-believable results in many cases."><meta itemprop="datePublished" content="2021-11-15T22:52:12+00:00" />
+<meta itemprop="dateModified" content="2021-11-15T22:52:12+00:00" />
+<meta itemprop="wordCount" content="5759"><meta itemprop="image" content="https://diharaw.github.io"/>
 <meta itemprop="keywords" content="Ray Tracing,Vulkan," />
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://diharaw.github.io"/>
@@ -67,8 +67,8 @@ Before going any further let&rsquo;s answer the question &ldquo;Why hybrid rende
 Before going any further let&rsquo;s answer the question &ldquo;Why hybrid rendering?&rdquo;. In a typical rasterization based rendering pipeline, certain effects such as Global Illumination, Reflections and Soft Shadows have to be approximated using either screen space techniques, offline baking or other approaches which typically lead to less-than-believable results in many cases." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://diharaw.github.io/post/adventures_in_hybrid_rendering/" /><meta property="og:image" content="https://diharaw.github.io"/><meta property="article:section" content="post" />
-<meta property="article:published_time" content="2021-09-27T19:20:56+01:00" />
-<meta property="article:modified_time" content="2021-09-27T19:20:56+01:00" />
+<meta property="article:published_time" content="2021-11-15T22:52:12+00:00" />
+<meta property="article:modified_time" content="2021-11-15T22:52:12+00:00" />
 
 
 
@@ -76,7 +76,7 @@ Before going any further let&rsquo;s answer the question &ldquo;Why hybrid rende
 
 
 
-    <meta property="article:published_time" content="2021-09-27 19:20:56 &#43;0100 BST" />
+    <meta property="article:published_time" content="2021-11-15 22:52:12 &#43;0000 UTC" />
 
 
 
@@ -443,7 +443,45 @@ barrier();
         ShadowTileData.coord[idx] <span style="color:#f92672">=</span> current_coord;
     }
 }
-</code></pre></div><h2 id="ambient-occlusion">Ambient Occlusion</h2>
+</code></pre></div><h3 id="performance">Performance</h3>
+<ul>
+<li>NVIDIA GeForce RTX 2070 SUPER</li>
+<li>1920x1080 Window Resolution</li>
+<li>Full Resolution Ray Trace</li>
+<li>Sponza Scene</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Pass</th>
+<th>Original</th>
+<th>Optimized</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ray Trace</td>
+<td>0.52 ms</td>
+<td>0.3 ms</td>
+</tr>
+<tr>
+<td>Temporal Accumulation</td>
+<td>0.37 ms</td>
+<td>0.36 ms</td>
+</tr>
+<tr>
+<td>A-Trous Filter</td>
+<td>1.48 ms</td>
+<td>0.55 ms</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>2.39 ms</strong></td>
+<td><strong>1.23 ms</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="ambient-occlusion">Ambient Occlusion</h2>
 <figure><a href="https://diharaw.github.io/images/adventures_in_hybrid_rendering/7.jpg" target="_blank"><img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/7.jpg"
          alt="Ray Traced Ambient Occlusion"/></a><figcaption>
             <p>Ray Traced Ambient Occlusion</p>
@@ -508,7 +546,45 @@ barrier();
     uint idx                   <span style="color:#f92672">=</span> atomicAdd(DenoiseTileDispatchArgs.num_groups_x, <span style="color:#ae81ff">1</span>);
     DenoiseTileData.coord[idx] <span style="color:#f92672">=</span> current_coord;
 }
-</code></pre></div><h2 id="reflections">Reflections</h2>
+</code></pre></div><h3 id="performance-1">Performance</h3>
+<ul>
+<li>NVIDIA GeForce RTX 2070 SUPER</li>
+<li>1920x1080 Window Resolution</li>
+<li>Quarter Resolution Ray Trace</li>
+<li>Sponza Scene</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Pass</th>
+<th>Original</th>
+<th>Optimized</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ray Trace</td>
+<td>0.093 ms</td>
+<td>0.09 ms</td>
+</tr>
+<tr>
+<td>Temporal Accumulation</td>
+<td>0.09 ms</td>
+<td>0.091 ms</td>
+</tr>
+<tr>
+<td>Blur</td>
+<td>0.12 ms</td>
+<td>0.06 ms</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>0.53 ms</strong></td>
+<td><strong>0.46 ms</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="reflections">Reflections</h2>
 <figure><a href="https://diharaw.github.io/images/adventures_in_hybrid_rendering/8.jpg" target="_blank"><img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/8.jpg"
          alt="Ray Traced Reflections"/></a><figcaption>
             <p>Ray Traced Reflections</p>
@@ -699,7 +775,45 @@ barrier();
         CopyTileData.coord[idx] <span style="color:#f92672">=</span> current_coord;
     }
 }
-</code></pre></div><h2 id="global-illumination">Global Illumination</h2>
+</code></pre></div><h3 id="performance-2">Performance</h3>
+<ul>
+<li>NVIDIA GeForce RTX 2070 SUPER</li>
+<li>1920x1080 Window Resolution</li>
+<li>Half Resolution Ray Trace</li>
+<li>Sponza Scene</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Pass</th>
+<th>Original</th>
+<th>Optimized</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ray Trace</td>
+<td>1.41 ms</td>
+<td>1.08 ms</td>
+</tr>
+<tr>
+<td>Temporal Accumulation</td>
+<td>0.6 ms</td>
+<td>0.57 ms</td>
+</tr>
+<tr>
+<td>A-Trous Filter</td>
+<td>0.38 ms</td>
+<td>0.25 ms</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>2.61 ms</strong></td>
+<td><strong>2.13 ms</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="global-illumination">Global Illumination</h2>
 <figure><a href="https://diharaw.github.io/images/adventures_in_hybrid_rendering/9.jpg" target="_blank"><img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/9.jpg"
          alt="Ray Traced Global Illumination"/></a><figcaption>
             <p>Ray Traced Global Illumination</p>
@@ -820,6 +934,55 @@ copy_texel(current_coord, gl_LocalInvocationIndex);
  <img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/22.jpg" />
  <img src="https://diharaw.github.io/images/adventures_in_hybrid_rendering/23.jpg" />
 </div>
+<h3 id="performance-3">Performance</h3>
+<ul>
+<li>NVIDIA GeForce RTX 2070 SUPER</li>
+<li>1920x1080 Window Resolution</li>
+<li>3960 Probes</li>
+<li>256 Rays Per Probe</li>
+<li>Sponza Scene</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Pass</th>
+<th>Original</th>
+<th>Optimized</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ray Trace</td>
+<td>3.47 ms</td>
+<td>3.34 ms</td>
+</tr>
+<tr>
+<td>Irradiance Update</td>
+<td>0.46 ms</td>
+<td>0.28 ms</td>
+</tr>
+<tr>
+<td>Depth Update</td>
+<td>1.78 ms</td>
+<td>1.06 ms</td>
+</tr>
+<tr>
+<td>Border Update</td>
+<td>0.05 ms</td>
+<td>0.05 ms</td>
+</tr>
+<tr>
+<td>Sample Probe Grid</td>
+<td>0.88 ms</td>
+<td>0.88 ms</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>6.66 ms</strong></td>
+<td><strong>5.65 ms</strong></td>
+</tr>
+</tbody>
+</table>
 <h2 id="conclusion">Conclusion</h2>
 <p>So these were some of the noteworthy things I&rsquo;ve learned throughout the process of making this sample. Hope this post helped you understand what the code actually does and maybe even gave you a few ideas on how to tweak your own Hybrid Rendering Pipelines. There are plenty more techniques to try out such as Ray Traced Translucency, Transparent Shadows and Order Independent Transparency to name a few. Also a simplified denoiser that doesn&rsquo;t just use SVGF for everything would be nice! I might just save some of these for a future blog post. But until then, have fun with this sample!</p>
 <h2 id="references">References</h2>
@@ -853,6 +1016,14 @@ copy_texel(current_coord, gl_LocalInvocationIndex);
 
             
   		</div>
+
+        <script src="https://utteranc.es/client.js"
+        repo="diharaw/diharaw.github.io"
+        issue-term="pathname"
+        theme="github-dark"
+        crossorigin="anonymous"
+        async>
+        </script>
     </main>
 
             </div>
