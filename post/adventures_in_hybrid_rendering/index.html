@@ -204,7 +204,7 @@ Before going any further let&rsquo;s answer the question &ldquo;Why hybrid rende
 <p>The way we find where the pixel was in the previous frame is by using the current pixels motion vector which will allow us to find where this particular pixel was during the previous frame in screen space.</p>
 <p>The following simplified code block runs through the basic temporal accumulation logic.</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">// Fetch the current sample.
-</span><span style="color:#75715e"></span>vec4 current_sample <span style="color:#f92672">=</span> texture(s_Current, tex_coord).rg;
+</span><span style="color:#75715e"></span>vec4 current_sample <span style="color:#f92672">=</span> texture(s_Current, tex_coord);
 
 <span style="color:#75715e">// Get the motion vector for the current pixel.
 </span><span style="color:#75715e"></span>vec2 motion_vector <span style="color:#f92672">=</span> texture(s_MotionVector, tex_coord).rg;
